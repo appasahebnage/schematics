@@ -1,28 +1,57 @@
 import { Injectable } from '@nestjs/common';<% if (crud && type !== 'graphql-code-first' && type !== 'graphql-schema-first') { %>
-import { Create<%= singular(classify(name)) %>Dto } from './dto/create-<%= singular(name) %>.dto';
-import { Update<%= singular(classify(name)) %>Dto } from './dto/update-<%= singular(name) %>.dto';<% } else if (crud) { %>
-import { Create<%= singular(classify(name)) %>Input } from './dto/create-<%= singular(name) %>.input';
-import { Update<%= singular(classify(name)) %>Input } from './dto/update-<%= singular(name) %>.input';<% } %>
-
-@Injectable()
-export class <%= classify(name) %>Service {<% if (crud) { %>
-  create(<% if (type !== 'graphql-code-first' && type !== 'graphql-schema-first') { %>create<%= singular(classify(name)) %>Dto: Create<%= singular(classify(name)) %>Dto<% } else { %>create<%= singular(classify(name)) %>Input: Create<%= singular(classify(name)) %>Input<% } %>) {
-    return 'This action adds a new <%= lowercased(singular(classify(name))) %>';
-  }
-
-  findAll() {
-    return `This action returns all <%= lowercased(classify(name)) %>`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} <%= lowercased(singular(classify(name))) %>`;
-  }
-
-  update(id: number, <% if (type !== 'graphql-code-first' && type !== 'graphql-schema-first') { %>update<%= singular(classify(name)) %>Dto: Update<%= singular(classify(name)) %>Dto<% } else { %>update<%= singular(classify(name)) %>Input: Update<%= singular(classify(name)) %>Input<% } %>) {
-    return `This action updates a #${id} <%= lowercased(singular(classify(name))) %>`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} <%= lowercased(singular(classify(name))) %>`;
-  }
-<% } %>}
+  import {
+    Create<%= classify(name) %>RequestDto,
+    List<%= classify(name) %>ResponseDto,
+    Update<%= classify(name) %>RequestDto,
+    <%= classify(name) %>Dto,
+  } from '@app/api';
+  import { PrismaService } from '@/common/prisma/prisma.service';
+  import { Prisma } from '@app/prisma';<% } else if (crud) { %>
+  import { Create<%= singular(classify(name)) %>Input } from './dto/create-<%= singular(name) %>.input';
+  import { Update<%= singular(classify(name)) %>Input } from './dto/update-<%= singular(name) %>.input';<% } %>
+  
+  @Injectable()
+  export class <%= classify(name) %>Service {<% if (crud) { %>
+    constructor(private readonly prisma: PrismaService) {}
+  
+    public async create<%= classify(name) %>(dto: Create<%= singular(classify(name)) %>RequestDto): Promise<<%= classify(name) %>Dto> {
+      const data: Prisma.<%= classify(name) %>CreateInput = {
+        ...dto,
+      };
+      return await this.prisma.<%= camelize(name) %>.create({
+        data,
+      });
+    }
+  
+    public async findAll<%= classify(name) %>(): Promise<List<%= classify(name) %>ResponseDto> {
+      return await this.prisma.<%= camelize(name) %>.findMany();
+    }
+  
+    public async findOne<%= classify(name) %>(<%= camelize(name) %>Id: string): Promise<<%= classify(name) %>Dto> {
+      return await this.prisma.<%= camelize(name) %>.findUniqueOrThrow({
+        where: {
+          <%= camelize(name) %>Id,
+        },
+      });
+    }
+  
+    public async update<%= classify(name) %>(<%= camelize(name) %>Id: string, dto: Update<%= singular(classify(name)) %>RequestDto): Promise<<%= classify(name) %>Dto> {
+      await this.findOne<%= classify(name) %>(<%= camelize(name) %>Id);
+      return await this.prisma.<%= camelize(name) %>.update({
+        where: {
+          <%= camelize(name) %>Id,
+        },
+        data: dto,
+      });
+    }
+  
+    public async remove<%= classify(name) %>(<%= camelize(name) %>Id: string): Promise<<%= classify(name) %>Dto> {
+      await this.findOne<%= classify(name) %>(<%= camelize(name) %>Id);
+      return await this.prisma.<%= camelize(name) %>.delete({
+        where: {
+          <%= camelize(name) %>Id,
+        },
+      });
+    }
+  <% } %>}
+  
